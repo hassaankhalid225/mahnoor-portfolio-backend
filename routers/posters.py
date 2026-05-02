@@ -1,8 +1,22 @@
-from fastapi import APIRouter, HTTPException
+import os
+import cloudinary
+import cloudinary.uploader
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from typing import List, Optional
 from bson import ObjectId
 from database import posters_collection
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Cloudinary Configuration
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    secure=True
+)
 
 router = APIRouter(prefix="/posters", tags=["posters"])
 
@@ -61,3 +75,31 @@ async def delete_poster(poster_id: str):
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Poster not found")
     return {"message": "Deleted successfully"}
+
+@router.post("/upload/")
+async def upload_poster(file: UploadFile = File(...)):
+    try:
+        # Upload to Cloudinary
+        upload_result = cloudinary.uploader.upload(
+            file.file,
+            folder="portfolio/posters",
+            tags=["Poster"]
+        )
+        
+        # Save to MongoDB
+        last = await posters_collection.find_one(sort=[("order", -1)])
+        new_order = (last["order"] + 1) if last else 0
+        
+        doc = {
+            "public_id": upload_result["public_id"],
+            "secure_url": upload_result["secure_url"],
+            "order": new_order,
+            "title": file.filename
+        }
+        
+        result = await posters_collection.insert_one(doc)
+        doc["id"] = str(result.inserted_id)
+        
+        return doc
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
