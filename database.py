@@ -4,10 +4,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-MONGO_URI = os.getenv(
-    "MONGO_URI",
-    "mongodb+srv://mahnoorfatim09_db_user:3WIGPNyaLdiC8qgX@portfolio-data.imvpfu9.mongodb.net/?appName=portfolio-data"
-)
+MONGO_URI = os.getenv("MONGO_URI")
+if not MONGO_URI:
+    raise ValueError("MONGO_URI environment variable is not set")
+
 
 client = AsyncIOMotorClient(MONGO_URI)
 db = client["portfolio_db"]
