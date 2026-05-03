@@ -34,8 +34,7 @@ async def get_shorts():
 async def create_short(short: ShortCreate):
     data = short.model_dump()
     result = await shorts_collection.insert_one(data)
-    data["id"] = str(result.inserted_id)
-    return data
+    return fmt(data)
 
 @router.put("/reorder")
 async def reorder_shorts(updates: List[ShortUpdateOrder]):

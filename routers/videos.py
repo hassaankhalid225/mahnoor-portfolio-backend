@@ -34,8 +34,7 @@ async def get_videos():
 async def create_video(video: VideoCreate):
     data = video.model_dump()
     result = await videos_collection.insert_one(data)
-    data["id"] = str(result.inserted_id)
-    return data
+    return fmt(data)
 
 @router.put("/reorder")
 async def reorder_videos(updates: List[VideoUpdateOrder]):

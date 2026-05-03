@@ -57,8 +57,7 @@ async def add_poster(poster: PosterCreate):
         "order": new_order,
     }
     result = await posters_collection.insert_one(doc)
-    doc["id"] = str(result.inserted_id)
-    return doc
+    return fmt(doc)
 
 @router.put("/reorder")
 async def reorder_posters(updates: List[PosterUpdateOrder]):
@@ -98,8 +97,6 @@ async def upload_poster(file: UploadFile = File(...)):
         }
         
         result = await posters_collection.insert_one(doc)
-        doc["id"] = str(result.inserted_id)
-        
-        return doc
+        return fmt(doc)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
